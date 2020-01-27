@@ -40,7 +40,7 @@ function protected(req, res, next) {
     next();
   } else {
     res.status(401).json({
-      message: `Your cookie is either not there, or it contains no valid sessionId`
+      message: `You shall not pass!`
     });
   }
 }
