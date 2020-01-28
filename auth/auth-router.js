@@ -1,9 +1,7 @@
 const router = require("express").Router();
 const bcryptjs = require("bcryptjs");
-const uuid = require("uuid");
 const userDb = require("../users/user-model");
 
-const activeSessions = [];
 
 router.post("/register", async (req, res, next) => {
   const { username, password } = req.body;
@@ -23,9 +21,7 @@ router.post("/login", async (req, res, next) => {
     const user = await userDb.getByUsername(username);
     const passwordCheck = await bcryptjs.compare(password, user.password);
     if (passwordCheck) {
-      const newSessionId = uuid();
-      activeSessions.push(newSessionId);
-      res.cookie("sessionId", newSessionId, { maxAge: 900000 });
+      req.session.loggedIn = true;
       res.status(200).json({ message: `Successfull login!` });
     } else {
       res.status(401).json({ message: `You shall not pass!` });
@@ -35,12 +31,22 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
+router.get('/logout', (req,res,next)=>{
+  req.session.destroy(error=>{
+    if(error){
+      next(error);
+    }else{
+      res.status(200).json({message:`Logged out succesfully`})
+    }
+  })
+})
+
 function protected(req, res, next) {
-  if (activeSessions.includes(req.cookies.sessionId)) {
+  if (req.session.loggedIn) {
     next();
   } else {
     res.status(401).json({
-      message: `You shall not pass!`
+      message: `no cookie, OR cookie without a valid session id in the monkey`
     });
   }
 }
